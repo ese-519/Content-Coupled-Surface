@@ -3,12 +3,19 @@
 
 Serial pc(USBTX, USBRX);
 
-#define MAXCOUNT 5
+#define MAXCOUNT 100
 #define LEN 16
+#define THRESHOLD 20
+#define WINDOW 4
 
 float prevPressureVal[LEN][LEN]={0};
 float pressureMat[LEN][LEN] = {0};
 int counterTable[LEN][LEN] = {0};
+
+// For the 4*4 grid logic
+
+int previousRead[WINDOW][WINDOW] = {0};
+int counterRead[WINDOW][WINDOW] = {0};
 
 // mux
 DigitalOut select0_mux1(p24);
@@ -49,7 +56,7 @@ void getPressureMatrix(){
             select2_mux1 = getBit(col, 2);
             select3_mux1 = getBit(col, 3);
             //wait(0.05);
-            pressureMat[rows][col] = analog_read_1.read();
+            pressureMat[rows][col] = analog_read_1.read()*100;
             printf("%f ", pressureMat[rows][col]);
         
         }  
@@ -58,13 +65,17 @@ void getPressureMatrix(){
     printf("********************************\n");
 }
 
+// for comparison, we form a 4*4 current matrix and compare it with the 4*4 previous matrix
+// If the average of one is almost equal to the average of previous, we increment the not moved matrix by 1
+// This is how we get to control the final inflation and deflation of the layer
+
 void ComparePressureVal(){
-    
+
   for(int rows = 0; rows < LEN; rows++){
     for(int col = 0; col < LEN; col++){
        //TODO: the pressure might differ a bit but could be in same range. We might want to consider
        // this situation too.
-       if(pressureMat[rows][col] == prevPressureVal[rows][col]){
+       if(abs(pressureMat[rows][col] - prevPressureVal[rows][col]) < THRESHOLD){
                 counterTable[rows][col] += 1;              
         }
         //Copy current pressure value
@@ -77,16 +88,38 @@ void ComparePressureVal(){
     }
    }   
     
+ }
+
+
+ void comparePressureOnAnAverage() {
+    for(int rows = 0; rows < LEN; rows = rows + WINDOW) {
+        for(int col = 0; col < LEN; col = col + WINDOW) {
+            int avg = 0;
+            for (int i = rows; i < rows + WINDOW; i++) {
+                for (int j = col; j < col + WINDOW; j++) {
+                        avg += pressureMat[i][j];
+                }
+            }
+            avg = avg/(WINDOW*WINDOW);
+            if(abs(previousRead[rows/4][col/4] - avg) < THRESHOLD) {
+                counterRead[rows/4][col/4] += 1;
+                if(counterRead[rows/4][col/4] == MAXCOUNT) {
+                    // the person is really lazy and has not moved
+                    // inflate the area automatically
+                    // send signal to the pins of the mbed to actually infalte that area for row/4 and col/4
+                    // reset the matrix back to zeros since this node has been inflated
+                }
+            }
+            previousRead[rows/4][col/4] = avg;
+        }
+    }
  }   
     
 int main() {
     
     while(1) {
-        
-            
-            wait(0.05); // read pressure value after each 0.05 seconds
+            wait(1); // read pressure value after each 0.05 seconds
             getPressureMatrix();
             ComparePressureVal();
-            
         }
 }
