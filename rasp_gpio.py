@@ -1,5 +1,7 @@
 import RPi.GPIO as GPIO
 import time
+import serial
+
 
 # Function which controls the motor based on the received data.
 # Here, we will be using a de-multiplexer and the raspPi will be controlling the select lines of this demux 
@@ -14,9 +16,6 @@ enableDemux_pin = 5
 # Initializes input, output for raspberry pi BCM pins
 # be sure to init the select lines as well
 def initialize_raspi(input, output, default_val):
-	print input
-	print output
-	print default_val
 	GPIO.setmode(GPIO.BCM)
 	for num in input:
 		GPIO.setup(num, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -40,10 +39,10 @@ def startPwm(duty_cycle, freq):
 
 # This will set the select lines to the wanted value
 def setSelectLinesTo(val):
-	# diable the demux
-	GPIO.output(enableDemux_pin, GPIO.LOW)
 	global selectLines
 	global enableDemux_pin
+	# diable the demux
+	GPIO.output(enableDemux_pin, GPIO.LOW)
 
 	for i in range(0, 4):
 		if val&(1<<i) > 0:
@@ -56,10 +55,21 @@ def setSelectLinesTo(val):
 initialize_raspi([], selectLines, [1 for i in selectLines])
 initialize_raspi([], [enableDemux_pin], [0])
 startPwm(0, 100)
-# Main controlling logic
+
+
+
+ser = serial.Serial(
+   port='/dev/ttyS0',
+   baudrate = 9600,
+   timeout=1
+)
 
 while 1:
-	# wait for some input
+	x = ser.readline()
+	print x
+
+while 1:
+
 	# Maybe test it with the user input 1st
 	# get the number to input
 	inp = raw_input('Enter the selectline number\n')

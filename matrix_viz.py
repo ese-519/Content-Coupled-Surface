@@ -2,6 +2,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
+import sys
 
 def initZerosMatrix(rows, columns):
 	matrix = []
@@ -37,8 +38,7 @@ fig = plt.figure()
 ax1 = fig.add_subplot(111, projection='3d')
 
 matrix = initZerosMatrix(4, 4)
-setRowColumn(0, 0, 0.1, matrix)
-setRowColumn(3, 3, 0.4, matrix)
+setRowColumn(int(sys.argv[1]), int(sys.argv[2]), 0.1, matrix)
 
 xPos, yPos, dz = plot3DMatrix(matrix)
 
@@ -55,6 +55,6 @@ for i in range(0, len(zPos)):
 		colors.append('r')
 	else:
 		colors.append('g')
-
+ 
 ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
-plt.show()
+plt.savefig('gen.png', bbox_inches='tight')
