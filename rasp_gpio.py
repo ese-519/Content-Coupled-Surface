@@ -1,7 +1,11 @@
 import RPi.GPIO as GPIO
 import time
 import serial
-
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
+import sys
 
 # Function which controls the motor based on the received data.
 # Here, we will be using a de-multiplexer and the raspPi will be controlling the select lines of this demux 
@@ -50,23 +54,86 @@ def setSelectLinesTo(val):
 		else:
 			GPIO.output(selectLines[i], GPIO.LOW)
 	# enable the demux
-	GPIO.output(enableDemux_pin, GPIO.LOW) 
+	GPIO.output(enableDemux_pin, GPIO.LOW)
+
+def initZerosMatrix(rows, columns):
+	matrix = []
+	for i in range(0, rows):
+		newRow = []
+		for j in range(0, columns):
+			newRow.append(0)
+		matrix.append(newRow)
+	return matrix
+
+
+def setRowColumn(row, column, value, matrix):
+	matrix[row][column] = value
+
+
+def plot3DMatrix(matrix):
+	rows = len(matrix)
+	columns = len(matrix[0])
+	# print rows
+	# print columns
+	xRows = []
+	yCols =[]
+	height = []
+	for i in range(0, rows):
+		for j in range(0, columns):
+			# put the rows and columns 
+			xRows.append(i)
+			yCols.append(j)
+			height.append(matrix[i][j]) 
+	return xRows, yCols, height
 
 initialize_raspi([], selectLines, [1 for i in selectLines])
 initialize_raspi([], [enableDemux_pin], [0])
-startPwm(0, 100)
+# startPwm(0, 100)
 
 
+def createImage(xSet1, ySet1, level):
+	global fig
+	global ax1
+	global matrix
+
+	setRowColumn(xSet1, ySet1, level, matrix)
+
+	xPos, yPos, dz = plot3DMatrix(matrix)
+
+	zPos = [0 for i in range(0, len(dz))]
+	dx = np.ones(len(xPos))
+	dy = np.ones(len(yPos))
+	ax1.set_zlim(0, 0.5)
+
+	colors = []
+	for i in range(0, len(zPos)):
+		if dz[i] > 0.3:
+			colors.append('b')
+		elif dz[i] > 0:
+			colors.append('r')
+		else:
+			colors.append('g')
+	 
+	ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
+	plt.savefig('gen.png', bbox_inches='tight')	
 
 ser = serial.Serial(
    port='/dev/ttyS0',
    baudrate = 9600,
    timeout=1
 )
+fig = plt.figure()
+ax1 = fig.add_subplot(111, projection='3d')
+matrix = initZerosMatrix(4, 4)
 
 while 1:
 	x = ser.readline()
-	print x
+	if x != "":
+		print x
+		parsed = x.split(" ")
+		if len(parsed) == 2:
+			createImage(int(parsed[0]), int(parsed[1]), 0.1)
+
 
 while 1:
 

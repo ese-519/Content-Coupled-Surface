@@ -38,7 +38,7 @@ fig = plt.figure()
 ax1 = fig.add_subplot(111, projection='3d')
 
 matrix = initZerosMatrix(4, 4)
-setRowColumn(int(sys.argv[1]), int(sys.argv[2]), 0.1, matrix)
+# setRowColumn(int(sys.argv[1]), int(sys.argv[2]), 0.1, matrix)
 
 xPos, yPos, dz = plot3DMatrix(matrix)
 
