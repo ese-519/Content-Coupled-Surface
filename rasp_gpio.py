@@ -20,6 +20,12 @@ enableDemux_pin = 5
 demuxInput_pin = 23
 inflation_deflation_delay = 4
 
+
+# Demo 1 edits
+inflating = [10, 22]
+deflating = [27, 17]
+motors = [9, 11]
+
 # Initializes input, output for raspberry pi BCM pins
 # be sure to init the select lines as well
 def initialize_raspi(input, output, default_val):
@@ -126,10 +132,14 @@ status_Matrix = initZerosMatrix(4, 4)
 
 GPIO.setmode(GPIO.BCM)
 # init select lines
-initialize_raspi([], selectLines, [0 for i in selectLines])
+# initialize_raspi([], selectLines, [0 for i in selectLines])
 # set output to be 0
-initialize_raspi([], [demuxInput_pin], [0])
+# initialize_raspi([], [demuxInput_pin], [0])
 # maybe have a demux for valves as well with same select lines but different output
+initialize_raspi([], [inflating], [0 for i in inflating])
+initialize_raspi([], [deflating], [0 for i in deflating])
+initialize_raspi([], [motors], [0 for i in motors])
+
 
 
 while 1:
@@ -141,16 +151,56 @@ while 1:
 			row = int(parsed[0])
 			column = int(parsed[1])
 			if status_Matrix[row][columns] == 0:
-				val = parsed[0]*4 + parsed[1]
-				setSelectLinesTo(val)
 				status_Matrix[row][columns] = 1
 				createImage(row, columns, 0.1)
-				GPIO.output(demuxInput_pin, GPIO.HIGH)
-				time.sleep(inflation_deflation_delay)
-				GPIO.output(demuxInput_pin, GPIO.LOW)
+				if row == 0 and columns == 0:
+					# inflate this co-ordinate
+					GPIO.output(inflating[0], GPIO.HIGH)
+					GPIO.output(motors[0], GPIO.HIGH)
+					time.sleep(inflation_deflation_delay)
+					GPIO.output(inflating[0], GPIO.LOW)
+					GPIO.output(motors[0], GPIO.LOW)
+				elif row == 0 and columns == 1:
+					# inflate this co-ordinate
+					GPIO.output(inflating[1], GPIO.HIGH)
+					GPIO.output(motors[1], GPIO.HIGH)
+					time.sleep(inflation_deflation_delay)
+					GPIO.output(inflating[1], GPIO.LOW)
+					GPIO.output(motors[1], GPIO.LOW)
+
 			else:
 				createImage(row, columns, 0)
 				status_Matrix[row][columns] = 0
+				if row == 0 and columns == 0:
+					# inflate this co-ordinate
+					GPIO.output(deflating[0], GPIO.HIGH)
+					time.sleep(inflation_deflation_delay)
+					GPIO.output(deflating[0], GPIO.LOW)
+				elif row == 0 and columns == 1:
+					# inflate this co-ordinate
+					GPIO.output(deflating[1], GPIO.HIGH)
+					time.sleep(inflation_deflation_delay)
+					GPIO.output(deflating[1], GPIO.LOW)
+
+# while 1:
+# 	x = ser.readline()
+# 	if x != "":
+# 		print x
+# 		parsed = x.split(" ")
+# 		if len(parsed) == 2:
+# 			row = int(parsed[0])
+# 			column = int(parsed[1])
+# 			if status_Matrix[row][columns] == 0:
+# 				val = parsed[0]*4 + parsed[1]
+# 				setSelectLinesTo(val)
+# 				status_Matrix[row][columns] = 1
+# 				createImage(row, columns, 0.1)
+# 				GPIO.output(demuxInput_pin, GPIO.HIGH)
+# 				time.sleep(inflation_deflation_delay)
+# 				GPIO.output(demuxInput_pin, GPIO.LOW)
+# 			else:
+# 				createImage(row, columns, 0)
+# 				status_Matrix[row][columns] = 0
 
 while 1:
 
