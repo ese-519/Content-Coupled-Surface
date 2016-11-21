@@ -6,16 +6,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
 import sys
-
+# scp rasp_gpio.py pi@10.251.87.217:/home/pi/Desktop/code-rep
+# http://10.251.87.217:8080/frontend.html
 # Function which controls the motor based on the received data.
 # Here, we will be using a de-multiplexer and the raspPi will be controlling the select lines of this demux 
 
 # PWM is boardcom pin 18
-pwm_pin = 18 
+pwm_pin = 18
 pwmObj = None
 # S0 --- S3
 selectLines = [6, 13, 19, 26]
 enableDemux_pin = 5
+demuxInput_pin = 23
+inflation_deflation_delay = 4
 
 # Initializes input, output for raspberry pi BCM pins
 # be sure to init the select lines as well
@@ -46,7 +49,7 @@ def setSelectLinesTo(val):
 	global selectLines
 	global enableDemux_pin
 	# diable the demux
-	GPIO.output(enableDemux_pin, GPIO.LOW)
+	# GPIO.output(enableDemux_pin, GPIO.LOW)
 
 	for i in range(0, 4):
 		if val&(1<<i) > 0:
@@ -54,16 +57,10 @@ def setSelectLinesTo(val):
 		else:
 			GPIO.output(selectLines[i], GPIO.LOW)
 	# enable the demux
-	GPIO.output(enableDemux_pin, GPIO.LOW)
+	# GPIO.output(enableDemux_pin, GPIO.HIGH)
 
 def initZerosMatrix(rows, columns):
-	matrix = []
-	for i in range(0, rows):
-		newRow = []
-		for j in range(0, columns):
-			newRow.append(0)
-		matrix.append(newRow)
-	return matrix
+	return [[0 for j in range(0, columns)] for i in range(0, rows)]
 
 
 def setRowColumn(row, column, value, matrix):
@@ -86,8 +83,8 @@ def plot3DMatrix(matrix):
 			height.append(matrix[i][j]) 
 	return xRows, yCols, height
 
-initialize_raspi([], selectLines, [1 for i in selectLines])
-initialize_raspi([], [enableDemux_pin], [0])
+
+# initialize_raspi([], [enableDemux_pin], [0])
 # startPwm(0, 100)
 
 
@@ -125,6 +122,15 @@ ser = serial.Serial(
 fig = plt.figure()
 ax1 = fig.add_subplot(111, projection='3d')
 matrix = initZerosMatrix(4, 4)
+status_Matrix = initZerosMatrix(4, 4)
+
+GPIO.setmode(GPIO.BCM)
+# init select lines
+initialize_raspi([], selectLines, [0 for i in selectLines])
+# set output to be 0
+initialize_raspi([], [demuxInput_pin], [0])
+# maybe have a demux for valves as well with same select lines but different output
+
 
 while 1:
 	x = ser.readline()
@@ -132,8 +138,19 @@ while 1:
 		print x
 		parsed = x.split(" ")
 		if len(parsed) == 2:
-			createImage(int(parsed[0]), int(parsed[1]), 0.1)
-
+			row = int(parsed[0])
+			column = int(parsed[1])
+			if status_Matrix[row][columns] == 0:
+				val = parsed[0]*4 + parsed[1]
+				setSelectLinesTo(val)
+				status_Matrix[row][columns] = 1
+				createImage(row, columns, 0.1)
+				GPIO.output(demuxInput_pin, GPIO.HIGH)
+				time.sleep(inflation_deflation_delay)
+				GPIO.output(demuxInput_pin, GPIO.LOW)
+			else:
+				createImage(row, columns, 0)
+				status_Matrix[row][columns] = 0
 
 while 1:
 

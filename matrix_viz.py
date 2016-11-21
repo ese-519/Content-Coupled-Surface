@@ -5,13 +5,7 @@ from matplotlib import cm
 import sys
 
 def initZerosMatrix(rows, columns):
-	matrix = []
-	for i in range(0, rows):
-		newRow = []
-		for j in range(0, columns):
-			newRow.append(0)
-		matrix.append(newRow)
-	return matrix
+	return [[0 for i in range(0, columns)] for j in range(0, rows)]
 
 
 def setRowColumn(row, column, value, matrix):
