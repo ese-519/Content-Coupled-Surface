@@ -3,9 +3,13 @@ import time
 import serial
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as pltHeat
 import numpy as np
 from matplotlib import cm
 import sys
+import numpy as np
+import thread
+
 # scp rasp_gpio.py pi@10.251.87.217:/home/pi/Desktop/code-rep
 # http://10.251.87.217:8080/frontend.html
 # Function which controls the motor based on the received data.
@@ -18,13 +22,15 @@ pwmObj = None
 selectLines = [6, 13, 19, 26]
 enableDemux_pin = 5
 demuxInput_pin = 23
-inflation_deflation_delay = 4
+inflation_deflation_delay = 5
+def_delay = 1
 
-
+vmaxHeat = 0
 # Demo 1 edits
 inflating = [10, 22]
 deflating = [27, 17]
 motors = [9, 11]
+cbar = None
 
 # Initializes input, output for raspberry pi BCM pins
 # be sure to init the select lines as well
@@ -98,7 +104,7 @@ def createImage(xSet1, ySet1, level):
 	global fig
 	global ax1
 	global matrix
-
+	fig = plt.figure(1)
 	setRowColumn(xSet1, ySet1, level, matrix)
 
 	xPos, yPos, dz = plot3DMatrix(matrix)
@@ -120,15 +126,56 @@ def createImage(xSet1, ySet1, level):
 	ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
 	plt.savefig('gen.png', bbox_inches='tight')	
 
+
+def updateHeatMap(x, y, val):
+	global heatMapMatrix
+	global vmaxHeat
+	global axHeat
+	global fig
+	global cbar
+
+	fig = plt.figure(2)
+	heatMapMatrix[x][y] = val
+	if val > vmaxHeat:
+		vmaxHeat = val
+	labels= [i for i in range(0, len(heatMapMatrix[0]))]
+	
+	
+	heatmap = axHeat.pcolor(np.array(heatMapMatrix), cmap='hot', vmin=-10, vmax = vmaxHeat + 10, edgecolors='black')
+	if cbar != None:
+		cbar.remove()
+	cbar = fig.colorbar(heatmap)
+	#cbar.set_ticks(range(100)) # Integer colorbar tick locations
+	axHeat.set_xticklabels(labels, minor = False)
+	axHeat.set_yticklabels(labels, minor = False)
+	plt.savefig('heatMap.png', bbox_inches='tight')
+
+
+def processHeatMap(threadName, listToHandle):
+
+
+def processInflateDeflate(threadName, listToHandle):
+	
+
+
 ser = serial.Serial(
    port='/dev/ttyS0',
    baudrate = 9600,
    timeout=1
 )
-fig = plt.figure()
+fig = plt.figure(1)
 ax1 = fig.add_subplot(111, projection='3d')
 matrix = initZerosMatrix(4, 4)
 status_Matrix = initZerosMatrix(4, 4)
+
+
+# figHeat = plt.figure()
+# axHeat = fig.add_subplot(111, projection='2d')
+
+fig = plt.figure(2)
+axHeat = fig.add_subplot(111)
+heatMapMatrix = initZerosMatrix(16, 16)
+
 
 GPIO.setmode(GPIO.BCM)
 # init select lines
@@ -139,7 +186,9 @@ GPIO.setmode(GPIO.BCM)
 initialize_raspi([], [inflating], [0 for i in inflating])
 initialize_raspi([], [deflating], [0 for i in deflating])
 initialize_raspi([], [motors], [0 for i in motors])
-
+ser.flushInput()
+listToHandleHeat = []
+listToHandleID = []
 
 
 while 1:
@@ -148,9 +197,11 @@ while 1:
 		print x
 		parsed = x.split(" ")
 		if len(parsed) == 2:
+			listToHandleID.append(parsed)
 			row = int(parsed[0])
-			column = int(parsed[1])
+			columns = int(parsed[1])
 			if status_Matrix[row][columns] == 0:
+				print "Inflating"
 				status_Matrix[row][columns] = 1
 				createImage(row, columns, 0.1)
 				if row == 0 and columns == 0:
@@ -170,17 +221,26 @@ while 1:
 
 			else:
 				createImage(row, columns, 0)
+				print "Deflating"
 				status_Matrix[row][columns] = 0
 				if row == 0 and columns == 0:
 					# inflate this co-ordinate
 					GPIO.output(deflating[0], GPIO.HIGH)
-					time.sleep(inflation_deflation_delay)
+					time.sleep(def_delay)
 					GPIO.output(deflating[0], GPIO.LOW)
 				elif row == 0 and columns == 1:
 					# inflate this co-ordinate
 					GPIO.output(deflating[1], GPIO.HIGH)
-					time.sleep(inflation_deflation_delay)
+					time.sleep(def_delay)
 					GPIO.output(deflating[1], GPIO.LOW)
+			ser.flushInput()
+		elif len(parsed) == 4:
+			if parsed[0] == 'H':
+				x = int(parsed[1])
+				y = int(parsed[2])
+				val = int(parsed[3])
+				updateHeatMap(x, y, val)
+				ser.flushInput()
 
 # while 1:
 # 	x = ser.readline()
@@ -225,11 +285,22 @@ while 1:
 	time.sleep(1)
 
 
+# def PlotHeatMap(x,y,val):
+
+# 	# row, col = 16,16
+# 	# Matrix = [[0 for x in range(row)]for y in range(col)]
+# 	Matrix[10][5] = val
+
+# 	vmax = val + 20
+# 	labels= [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+# 	fig, ax = plt.subplots()
+# 	heatmap = ax.pcolor(Matrix, cmap='hot',vmin=-10,vmax=vmax, edgecolors='black')
+# 	cbar = fig.colorbar(heatmap)
+
+# 	#cbar.set_ticks(range(100)) # Integer colorbar tick locations
+# 	ax.set_xticklabels(labels, minor=False)
+# 	ax.set_yticklabels(labels, minor=False)
 
 
-
-
-
-
-
+# 	ax.invert_yaxis()
 
