@@ -1,5 +1,5 @@
 from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, mpld3
 import numpy as np
 from matplotlib import cm
 import sys
@@ -51,4 +51,6 @@ for i in range(0, len(zPos)):
 		colors.append('g')
  
 ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
-plt.savefig('gen.png', bbox_inches='tight')
+# plt.savefig('gen.png', bbox_inches='tight')
+# plt.show()
+# mpld3.show()
