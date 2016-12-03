@@ -5,7 +5,7 @@ Serial pc(USBTX, USBRX);
 // serial pins for communication with Raspberry
 Serial mySerial(p9, p10);
 
-#define MAXCOUNT 5
+#define MAXCOUNT 10
 #define LEN 16
 #define THRESHOLD 10 // if user hasn't moved above this point inflate
 #define WINDOW 4
@@ -73,7 +73,7 @@ void getPressureMatrix(){
 //                printf("Sent for heat map\n");
 //            }
             if( sendCounter == 0) {
-                mySerial.printf("H %d %d %d\n", rows, col, (int)x);
+                mySerial.printf("%d\n", (int)x);
             }
         
         }  
@@ -140,7 +140,7 @@ void ComparePressureVal(){
 int main() {
     mySerial.baud(9600);
     while(1) {
-            wait(1); // read pressure value after each 0.05 seconds
+            wait(0.5); // read pressure value after each 0.05 seconds
             getPressureMatrix();
 //            ComparePressureVal();
             comparePressureOnAnAverage();

@@ -1,7 +1,8 @@
-# chat-example
+# Content-Coupled-Surface
+# ESE 519 - Pengineers
 
-This is the source code for a very simple chat example used for 
-the [Getting Started](http://socket.io/get-started/chat/) guide 
-of the Socket.IO website.
+main.cpp contains code to be run on the mbed
 
-Please refer to it to learn how to run this application.
+Run the startServer.sh to start the webserver and python process which reads from the raspberry Pi via UART.
+
+index.js and rasp_gpio.py are to be run on the raspberryPi
