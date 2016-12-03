@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <title>ESE 519 Pengineers</title>
+  </head>
+  <body>
+    <H1>Heat Map - Pengineers</H1>
+    <div>
+    <div id="myDiv" style="width:50%;height:50%; float:left;"></div>
+    <div id="divsec" style="width:50%;height:50%;  float:right;"></div>
+    </div>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        var socket = io();
+        socket.on('putdata_map', function(msg) {
+        
+        Plotly.purge('myDiv');
+        // split this on new lines and then parse the whole thing into 16 * 16
+        // do all the matrix parsing here
+        // console.log("Got message from node server" , msg.toString())
+        var matrix = []
+        for (i = 0; i < 16; i++) {
+          matrix[i] = []
+        }
+        var recv = msg.toString().split(" ")
+        for (i = 0; i < 256; i++) {
+          row = parseInt(15 - (i/16))
+          col = parseInt(i%16)
+          // console.log(x," ",y)
+          matrix[row][col] = parseInt(recv[i])
+        }
+
+      var data = [
+        {
+          title : 'HeatMap - Pengineers',
+          z: matrix,
+          colorscale: 'Hot',
+          type: 'heatmap',
+          x: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'],
+          y: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16']
+        }
+      ];
+
+      Plotly.plot('myDiv', data);
+
+      });
+
+      socket.on('putdata_id', function(msg) {
+        Plotly.purge('divsec')
+
+        console.log('For inflation and deflation', msg.toString())
+        // split this on new lines and then parse the whole thing into 16 * 16
+        // do all the matrix parsing here
+        // console.log("Got message from node server" , msg.toString())
+        // Plotly.purge(graphDiv);
+        var matrix = []
+        for (i = 0; i < 4; i++) {
+          matrix[i] = []
+        }
+        var recv = msg.toString().split(" ")
+        for (i = 0; i < 16; i++) {
+          row = parseInt(i/4)
+          col = parseInt(i%4)
+          matrix[row][col] = parseInt(recv[i])
+        }
+
+      var data = [
+      {
+        z : matrix, 
+        type : 'surface',
+          x: ['1', '2', '3', '4'],
+          y: ['1', '2', '3', '4']
+      }
+      ];
+
+      Plotly.plot('divsec', data);
+      });
+    </script>
+  </body>
+</html>

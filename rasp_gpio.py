@@ -10,7 +10,8 @@ import sys
 import numpy as np
 import thread
 from threading import Lock
-
+import socket
+#  pi@10.251.65.39
 # scp rasp_gpio.py pi@10.251.87.217:/home/pi/Desktop/code-rep
 # http://10.251.87.217:8080/frontend.html
 # Function which controls the motor based on the received data.
@@ -79,134 +80,145 @@ def initZerosMatrix(rows, columns):
 	return [[0 for j in range(0, columns)] for i in range(0, rows)]
 
 
-def setRowColumn(row, column, value, matrix):
-	matrix[row][column] = value
+# def setRowColumn(row, column, value, matrix):
+# 	matrix[row][column] = value
 
 
-def plot3DMatrix(matrix):
-	rows = len(matrix)
-	columns = len(matrix[0])
-	# print rows
-	# print columns
-	xRows = []
-	yCols =[]
-	height = []
-	for i in range(0, rows):
-		for j in range(0, columns):
-			# put the rows and columns 
-			xRows.append(i)
-			yCols.append(j)
-			height.append(matrix[i][j]) 
-	return xRows, yCols, height
+# def plot3DMatrix(matrix):
+# 	rows = len(matrix)
+# 	columns = len(matrix[0])
+# 	# print rows
+# 	# print columns
+# 	xRows = []
+# 	yCols =[]
+# 	height = []
+# 	for i in range(0, rows):
+# 		for j in range(0, columns):
+# 			# put the rows and columns 
+# 			xRows.append(i)
+# 			yCols.append(j)
+# 			height.append(matrix[i][j]) 
+# 	return xRows, yCols, height
 
 
-def createImage(xSet1, ySet1, level):
-	global mutex
-	global ax1
-	global matrix
-	global doneID
-	try:
-		mutex.acquire()
-		# fig = plt.figure(1)
-		for idx, xco in enumerate(xSet1):
-			setRowColumn(xco, ySet1[idx], level[idx], matrix)
+# def createImage(xSet1, ySet1, level):
+# 	global mutex
+# 	global ax1
+# 	global matrix
+# 	global doneID
+# 	try:
+# 		mutex.acquire()
+# 		# fig = plt.figure(1)
+# 		for idx, xco in enumerate(xSet1):
+# 			setRowColumn(xco, ySet1[idx], level[idx], matrix)
 
-		xPos, yPos, dz = plot3DMatrix(matrix)
+# 		xPos, yPos, dz = plot3DMatrix(matrix)
 
-		zPos = [0 for i in range(0, len(dz))]
-		dx = np.ones(len(xPos))
-		dy = np.ones(len(yPos))
-		ax1.set_zlim(0, 0.5)
+# 		zPos = [0 for i in range(0, len(dz))]
+# 		dx = np.ones(len(xPos))
+# 		dy = np.ones(len(yPos))
+# 		ax1.set_zlim(0, 0.5)
 
-		colors = []
-		for i in range(0, len(zPos)):
-			if dz[i] > 0.3:
-				colors.append('b')
-			elif dz[i] > 0:
-				colors.append('r')
-			else:
-				colors.append('g')
+# 		colors = []
+# 		for i in range(0, len(zPos)):
+# 			if dz[i] > 0.3:
+# 				colors.append('b')
+# 			elif dz[i] > 0:
+# 				colors.append('r')
+# 			else:
+# 				colors.append('g')
 		 
-		ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
-	finally:
-		'Created image for mat'
-		doneID = 1
-		mutex.release()
+# 		ax1.bar3d(xPos, yPos, zPos, dx, dy, dz, color=colors)
+# 	finally:
+# 		'Created image for mat'
+# 		doneID = 1
+# 		mutex.release()
 
 
-def updateHeatMap(x, y, val):
-	try:
-		global mutex
-		global heatMapMatrix
-		global vmaxHeat
-		global axHeat
-		global fig
-		global cbar
-		global doneHeatMap
-		mutex.acquire()
-		fig = plt.figure(2)
-		for idx, xco in enumerate(x):
-			heatMapMatrix[xco][y[idx]] = val[idx]
-			if val[idx] > vmaxHeat:
-				vmaxHeat = val[idx]
-	finally:
-		print 'Inner heat map changed'
-		doneHeatMap = 1
-		mutex.release()
+# def updateHeatMap(x, y, val):
+# 	try:
+# 		global mutex
+# 		global heatMapMatrix
+# 		global vmaxHeat
+# 		global axHeat
+# 		global fig
+# 		global cbar
+# 		global doneHeatMap
+# 		mutex.acquire()
+# 		fig = plt.figure(2)
+# 		for idx, xco in enumerate(x):
+# 			heatMapMatrix[xco][y[idx]] = val[idx]
+# 			if val[idx] > vmaxHeat:
+# 				vmaxHeat = val[idx]
+# 	finally:
+# 		print 'Inner heat map changed'
+# 		doneHeatMap = 1
+# 		mutex.release()
 
 
-def processHeatMap(listToHandle):
-	while 1:
-		if len(listToHandle) > 0:
-			xList = []
-			yList = []
-			valList = []
-			while len(listToHandle) > 0:	
-				parsed = listToHandle.pop(0)
-				# print 'Size of heat list' + str(len(listToHandle)) 
-				if parsed[0] == 'H':
-					xList.append(int(parsed[1]))
-					yList.append(int(parsed[2]))	
-					valList.append(int(parsed[3]))
-			# print 'Sent heat list for batch processing'
-			updateHeatMap(xList, yList, valList)
-		else:
-			time.sleep(0.1)
+# def processHeatMap(listToHandle):
+# 	global server_address
+# 	while 1:
+# 		if len(listToHandle) > 0:
+# 			xList = []
+# 			yList = []
+# 			valList = []
+# 			while len(listToHandle) > 0:	
+# 				parsed = listToHandle.pop(0)
+# 				# print 'Size of heat list' + str(len(listToHandle)) 
+# 				if parsed[0] == 'H':
+# 					xList.append(int(parsed[1]))
+# 					yList.append(int(parsed[2]))	
+# 					valList.append(int(parsed[3]))
+# 			# print 'Sent heat list for batch processing'
+# 			updateHeatMap(xList, yList, valList)
+# 		else:
+# 			time.sleep(0.1)
 
-def readData():
-	global listToHandleID, listToHandleHeat, ser
-	while 1:
-		x = ser.readline()
-		if x != "":
-			# print x
-			parsed = x.split(" ")
-			if len(parsed) == 2:
-				# print 'Added to Inf/def'
-				print x
-				listToHandleID.append(parsed)
-			elif len(parsed) == 4:
-				# print x
-				# print 'Added to heat map'
-				listToHandleHeat.append(parsed)
+# def readData():
+# 	global listToHandleID, ser
+# 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# 	currentHeatMap = ""
+# 	counterHeatMap = 0
+# 	while 1:
+# 		x = ser.readline()
+# 		if x != "":
+# 			# print x
+# 			parsed = x.split(" ")
+# 			if len(parsed) == 2:
+# 				listToHandleID.append(parsed)
+# 			elif len(parsed) == 4:
+# 				currentHeatMap  = currentHeatMap + parsed[3] + " "
+# 				counterHeatMap = counterHeatMap + 1
+# 				if counterHeatMap == 256:
+# 					# send all the data to the node server over udp
+# 					sock.sendto(currentHeatMap, server_address)
+# 					counterHeatMap = 0
+# 					currentHeatMap = ""
+
 
 
 def processInflateDeflate(listToHandle):
-	global status_Matrix, inflation_deflation_delay, motors, inflating, deflating, def_delay
+	global status_Matrix, inflation_deflation_delay, motors, inflating, deflating, def_delay, mutex, sock
 	while 1:
 		if len(listToHandle) > 0:
-			xList = []
-			yList = []
-			valList = []
 			while len(listToHandle) > 0:
 				parsed = listToHandle.pop(0)
 				row = int(parsed[0])
 				columns = int(parsed[1])
-				val = 0
-				if status_Matrix[row][columns] == 0:
-					val = 0.1
+				# val = 0
+				# if status_Matrix[row][columns] == 0:
+				# 	val = 0.1
 				if status_Matrix[row][columns] == 0:
 					print "Inflating"
+					# mutex.acquire()
 					status_Matrix[row][columns] = 1
+					# mutex.release()
+					currentIDMatrix = ""
+					for i in range(0, 16):
+						currentIDMatrix = currentIDMatrix + str(status_Matrix[i/4][i%4]) + " "
+					sock.sendto(currentIDMatrix, serverinf_address)
+
 					if row == 0 and columns == 0:
 						# inflate this co-ordinate
 						GPIO.output(inflating[0], GPIO.HIGH)
@@ -224,7 +236,14 @@ def processInflateDeflate(listToHandle):
 
 				else:
 					print "Deflating"
+					# mutex.acquire()
 					status_Matrix[row][columns] = 0
+					# mutex.release()
+					currentIDMatrix = ""
+					for i in range(0, 16):
+						currentIDMatrix = currentIDMatrix + str(status_Matrix[i/4][i%4]) + " "
+					sock.sendto(currentIDMatrix, serverinf_address)
+
 					if row == 0 and columns == 0:
 						# inflate this co-ordinate
 						GPIO.output(deflating[0], GPIO.HIGH)
@@ -235,10 +254,6 @@ def processInflateDeflate(listToHandle):
 						GPIO.output(deflating[1], GPIO.HIGH)
 						time.sleep(def_delay)
 						GPIO.output(deflating[1], GPIO.LOW)
-				xList.append(row)
-				yList.append(columns)
-				valList.append(val)
-			createImage(xList, yList, valList)
 		else:
 			time.sleep(0.1)
 
@@ -248,18 +263,9 @@ ser = serial.Serial(
    baudrate = 9600,
    timeout=1
 )
-fig = plt.figure(1)
-ax1 = fig.add_subplot(111, projection='3d')
+
 matrix = initZerosMatrix(4, 4)
 status_Matrix = initZerosMatrix(4, 4)
-
-
-# figHeat = plt.figure()
-# axHeat = fig.add_subplot(111, projection='2d')
-
-fig = plt.figure(2)
-axHeat = fig.add_subplot(111)
-heatMapMatrix = initZerosMatrix(16, 16)
 
 
 GPIO.setmode(GPIO.BCM)
@@ -267,37 +273,59 @@ initialize_raspi([], [inflating], [0 for i in inflating])
 initialize_raspi([], [deflating], [0 for i in deflating])
 initialize_raspi([], [motors], [0 for i in motors])
 ser.flushInput()
-listToHandleHeat = []
 listToHandleID = []
 
-mutex = Lock()
+
+server_address = ('localhost', 4560)
+serverinf_address = ('localhost', 4565)
 # start the two threads
 thread.start_new_thread( processInflateDeflate, (listToHandleID, ) )
-thread.start_new_thread( processHeatMap, (listToHandleHeat, ) )
-thread.start_new_thread( readData, ())
+# thread.start_new_thread( processHeatMap, (listToHandleHeat, ) )
+# thread.start_new_thread( readData, ())
 
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+currentHeatMap = ""
+counterHeatMap = 0
 while 1:
-	# time.sleep(3)
-	mutex.acquire()
-	if doneID == 1:
-		print 'Saving new Images'
-		plt.figure(1)
-		plt.savefig('gen.png', bbox_inches='tight')
-		doneID = 0
-	if doneHeatMap == 1:	
-		print 'Saving new Images'
-		plt.figure(2)
-		heatmap = axHeat.pcolor(np.array(heatMapMatrix), cmap='hot', vmin=-10, vmax = vmaxHeat + 10, edgecolors='black')
-		if cbar != None:
-			cbar.remove()
-		cbar = fig.colorbar(heatmap)
-		labels= [i for i in range(0, len(heatMapMatrix[0]))]
-		#cbar.set_ticks(range(100)) # Integer colorbar tick locations
-		axHeat.set_xticklabels(labels, minor = False)
-		axHeat.set_yticklabels(labels, minor = False)
-		plt.savefig('heatMap.png', bbox_inches='tight')
-		doneHeatMap = 0;
-	mutex.release()
+	x = ser.readline()
+	if x != "":
+		# print x
+		parsed = x.split(" ")
+		if len(parsed) == 2:
+			print x
+			listToHandleID.append(parsed)
+		elif len(parsed) == 1:
+			currentHeatMap  = currentHeatMap + parsed[0] + " "
+			counterHeatMap = counterHeatMap + 1
+			if counterHeatMap == 256:
+				# send all the data to the node server over udp
+				sock.sendto(currentHeatMap, server_address)
+				counterHeatMap = 0
+				currentHeatMap = ""
+
+# while 1:
+# 	# time.sleep(3)
+# 	mutex.acquire()
+# 	if doneID == 1:
+# 		print 'Saving new Images'
+# 		plt.figure(1)
+# 		plt.savefig('gen.png', bbox_inches='tight')
+# 		doneID = 0
+# 	if doneHeatMap == 1:	
+# 		print 'Saving new Images'
+# 		plt.figure(2)
+# 		heatmap = axHeat.pcolor(np.array(heatMapMatrix), cmap='hot', vmin=-10, vmax = vmaxHeat + 10, edgecolors='black')
+# 		if cbar != None:
+# 			cbar.remove()
+# 		cbar = fig.colorbar(heatmap)
+# 		labels= [i for i in range(0, len(heatMapMatrix[0]))]
+# 		#cbar.set_ticks(range(100)) # Integer colorbar tick locations
+# 		axHeat.set_xticklabels(labels, minor = False)
+# 		axHeat.set_yticklabels(labels, minor = False)
+# 		plt.savefig('heatMap.png', bbox_inches='tight')
+# 		doneHeatMap = 0;
+# 	mutex.release()
 
 
 # while 1:

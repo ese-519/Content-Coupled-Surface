@@ -1,21 +1,7 @@
-PROJECT NAME
-============
+# chat-example
 
-**University of Pennsylvania, ESE 519: Real Time and Embedded Systems**
+This is the source code for a very simple chat example used for 
+the [Getting Started](http://socket.io/get-started/chat/) guide 
+of the Socket.IO website.
 
-* TEAM MEMBER NAMES
-* [Blog](https://devpost.com/software/project-name) (TODO: Link to devpost submission)
-
-### DESCRIPTION AND GOALS
-(TODO: Add a brief description of the project and Final Goals)
-
-### VIDEO
-[![](images/Thumb.jpg)](https://www.youtube.com/watch?v=vgEyvazwrU8)
-
-### IMAGES and GIFs
-Add images and screenshot of your product, user iterface, etc. Animated GIFs of User interfaces would be preferred.
-
-![](images/animated.gif)
-
-### BUILD INSTRUCTIONS
-TODO: Steps to follow for anyone to use this code
+Please refer to it to learn how to run this application.
