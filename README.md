@@ -10,7 +10,7 @@ index.js and rasp_gpio.py are to be run on the raspberryPi
 ./startServer.sh
 ```
 
-*Link to DEVPOST: [`https://devpost.com/software/content-coupled-surface`](https://devpost.com/software/content-coupled-surface)*
+*Link to DEVPOST: [`https://devpost.com/software/content-coupled-surface`](https://devpost.com/software/content-coupled-surface)
 
 *Link to our video: [`https://youtu.be/O9hFijRY5ls`](https://youtu.be/O9hFijRY5ls)
 
